@@ -1,55 +1,16 @@
 package com.richardtalcott.periodic;
-import android.content.*;
-import android.graphics.*;
-import android.view.*;
-import java.util.*;
-public final class PeriodicTableView extends View {
-    private final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final ArrayList<RectF> cells=new ArrayList<>();
-    private final ArrayList<Integer> nums=new ArrayList<>();
-    private float scale=1f, lastX,lastY, offX=0,offY=0; private boolean moved;
-    public PeriodicTableView(Context c){super(c); p.setTypeface(Typeface.create(Typeface.DEFAULT,Typeface.BOLD));}
-    @Override protected void onDraw(Canvas c){
-        c.drawColor(Color.rgb(3,6,16)); float pad=18, header=66;
-        p.setTextAlign(Paint.Align.LEFT);p.setTextSize(34);p.setColor(Color.WHITE);c.drawText("PERIODIC",pad,42,p);
-        p.setTextSize(15);p.setColor(Color.rgb(92,196,255));c.drawText("PINCH TO ZOOM • DRAG • TAP AN ELEMENT",190,39,p);
-        c.save();c.translate(offX,offY);c.scale(scale,scale);
-        float cw=(getWidth()-pad*2)/18f, ch=Math.min(66,(getHeight()-header-25)/9f);
-        cells.clear();nums.clear();
-        for(int n=1;n<=118;n++){
-            ElementData e=ElementData.byNumber(n); float left=pad+(e.group-1)*cw, top=header+(e.row-1)*ch;
-            RectF r=new RectF(left+2,top+2,left+cw-2,top+ch-2); cells.add(r);nums.add(n);
-            int base=color(e.category); p.setStyle(Paint.Style.FILL);p.setColor(base);c.drawRoundRect(r,7,7,p);
-            p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1.5f);p.setColor(Color.argb(170,210,238,255));c.drawRoundRect(r,7,7,p);
-            p.setStyle(Paint.Style.FILL);p.setColor(Color.argb(120,255,255,255));c.drawRect(r.left+3,r.top+3,r.right-3,r.top+6,p);
-            p.setTextAlign(Paint.Align.LEFT);p.setTextSize(Math.max(9,ch*.19f));p.setColor(Color.rgb(195,225,245));c.drawText(String.valueOf(n),r.left+5,r.top+13,p);
-            p.setTextAlign(Paint.Align.CENTER);p.setTextSize(Math.max(14,ch*.38f));p.setColor(Color.WHITE);c.drawText(e.symbol,r.centerX(),r.centerY()+7,p);
-        }
-        c.restore();
-    }
-    private int color(String cat){
-        if(cat.contains("Noble"))return Color.rgb(45,72,128); if(cat.contains("Halogen"))return Color.rgb(100,43,90);
-        if(cat.contains("Alkali"))return Color.rgb(116,48,55); if(cat.contains("Transition"))return Color.rgb(31,83,112);
-        if(cat.contains("Lanthanide"))return Color.rgb(85,49,116); if(cat.contains("Actinide"))return Color.rgb(112,43,76);
-        if(cat.equals("Nonmetal"))return Color.rgb(27,103,86); if(cat.equals("Metalloid"))return Color.rgb(95,91,35);
-        return Color.rgb(54,68,86);
-    }
-    @Override public boolean onTouchEvent(android.view.MotionEvent ev){
-        if(ev.getPointerCount()==2){
-            float dx=ev.getX(0)-ev.getX(1),dy=ev.getY(0)-ev.getY(1),dist=(float)Math.hypot(dx,dy);
-            if(ev.getActionMasked()==MotionEvent.ACTION_POINTER_DOWN)lastX=dist;
-            else if(ev.getActionMasked()==MotionEvent.ACTION_MOVE&&lastX>0){scale=Math.max(.75f,Math.min(2.5f,scale*dist/lastX));lastX=dist;invalidate();}
-            return true;
-        }
-        float x=ev.getX(),y=ev.getY();
-        if(ev.getAction()==MotionEvent.ACTION_DOWN){lastX=x;lastY=y;moved=false;return true;}
-        if(ev.getAction()==MotionEvent.ACTION_MOVE){if(Math.abs(x-lastX)+Math.abs(y-lastY)>5)moved=true;offX+=x-lastX;offY+=y-lastY;lastX=x;lastY=y;invalidate();return true;}
-        if(ev.getAction()==MotionEvent.ACTION_UP&&!moved){
-            float tx=(x-offX)/scale,ty=(y-offY)/scale;
-            for(int i=0;i<cells.size();i++)if(cells.get(i).contains(tx,ty)){
-                Intent in=new Intent(getContext(),ElementDetailActivity.class);in.putExtra("atomicNumber",nums.get(i));getContext().startActivity(in);break;
-            }
-        }
-        return true;
-    }
+import android.app.AlertDialog;import android.content.*;import android.graphics.*;import android.view.*;import android.widget.EditText;import java.util.*;
+public final class PeriodicTableView extends View{
+ private final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);private final ArrayList<RectF>cells=new ArrayList<>();private final ArrayList<Integer>nums=new ArrayList<>();private final RectF search=new RectF(),reset=new RectF();private float scale=1,lastX,lastY,offX,offY;private boolean moved;
+ public PeriodicTableView(Context c){super(c);p.setTypeface(Typeface.create(Typeface.DEFAULT,Typeface.BOLD));}
+ protected void onDraw(Canvas c){c.drawColor(Color.rgb(3,6,16));float pad=18,header=72;p.setTextAlign(Paint.Align.LEFT);p.setTextSize(34);p.setColor(Color.WHITE);c.drawText("PERIODIC",pad,42,p);p.setTextSize(14);p.setColor(Color.rgb(92,196,255));c.drawText("V2 • PINCH • DRAG • TAP",190,39,p);search.set(getWidth()-210,14,getWidth()-116,54);reset.set(getWidth()-106,14,getWidth()-14,54);button(c,search,"SEARCH");button(c,reset,"CENTER");
+ c.save();c.translate(offX,offY);c.scale(scale,scale);float cw=(getWidth()-pad*2)/18f,ch=Math.min(66,(getHeight()-header-25)/9f);cells.clear();nums.clear();
+ for(int n=1;n<=118;n++){ElementData e=ElementData.byNumber(n);float l=pad+(e.group-1)*cw,t=header+(e.row-1)*ch;RectF r=new RectF(l+2,t+2,l+cw-2,t+ch-2);cells.add(r);nums.add(n);p.setStyle(Paint.Style.FILL);p.setShader(new LinearGradient(r.left,r.top,r.right,r.bottom,light(color(e.category)),color(e.category),Shader.TileMode.CLAMP));c.drawRoundRect(r,8,8,p);p.setShader(null);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(1.5f);p.setColor(Color.argb(190,210,238,255));c.drawRoundRect(r,8,8,p);p.setStyle(Paint.Style.FILL);p.setTextAlign(Paint.Align.LEFT);p.setTextSize(Math.max(9,ch*.18f));p.setColor(Color.rgb(210,232,248));c.drawText(String.valueOf(n),r.left+5,r.top+13,p);p.setTextAlign(Paint.Align.CENTER);p.setTextSize(Math.max(14,ch*.36f));p.setColor(Color.WHITE);c.drawText(e.symbol,r.centerX(),r.centerY()+5,p);if(scale>1.25f){p.setTextSize(Math.max(7,ch*.12f));p.setColor(Color.rgb(195,218,235));c.drawText(e.name,r.centerX(),r.bottom-6,p);}}
+ c.restore();}
+ private void button(Canvas c,RectF r,String s){p.setStyle(Paint.Style.FILL);p.setColor(Color.rgb(24,55,75));c.drawRoundRect(r,10,10,p);p.setStyle(Paint.Style.STROKE);p.setColor(Color.rgb(92,196,255));c.drawRoundRect(r,10,10,p);p.setStyle(Paint.Style.FILL);p.setTextAlign(Paint.Align.CENTER);p.setTextSize(13);p.setColor(Color.WHITE);c.drawText(s,r.centerX(),r.centerY()+5,p);}
+ private int light(int x){return Color.rgb(Math.min(255,Color.red(x)+24),Math.min(255,Color.green(x)+24),Math.min(255,Color.blue(x)+24));}
+ private int color(String x){if(x.contains("Noble"))return Color.rgb(45,72,128);if(x.contains("Halogen"))return Color.rgb(100,43,90);if(x.contains("Alkali"))return Color.rgb(116,48,55);if(x.contains("Transition"))return Color.rgb(31,83,112);if(x.contains("Lanthanide"))return Color.rgb(85,49,116);if(x.contains("Actinide"))return Color.rgb(112,43,76);if(x.equals("Nonmetal"))return Color.rgb(27,103,86);if(x.equals("Metalloid"))return Color.rgb(95,91,35);return Color.rgb(54,68,86);}
+ private void open(int n){Intent i=new Intent(getContext(),ElementDetailActivity.class);i.putExtra("atomicNumber",n);getContext().startActivity(i);}
+ private void search(){EditText input=new EditText(getContext());input.setHint("Oxygen, O, or 8");new AlertDialog.Builder(getContext()).setTitle("Find an element").setView(input).setPositiveButton("OPEN",(d,w)->{ElementData e=ElementData.find(input.getText().toString());if(e!=null)open(e.number);}).setNegativeButton("CANCEL",null).show();}
+ public boolean onTouchEvent(MotionEvent e){if(e.getPointerCount()==2){float d=(float)Math.hypot(e.getX(0)-e.getX(1),e.getY(0)-e.getY(1));if(e.getActionMasked()==MotionEvent.ACTION_POINTER_DOWN)lastX=d;else if(e.getActionMasked()==MotionEvent.ACTION_MOVE&&lastX>0){scale=Math.max(.75f,Math.min(3f,scale*d/lastX));lastX=d;invalidate();}return true;}float x=e.getX(),y=e.getY();if(e.getAction()==MotionEvent.ACTION_DOWN){lastX=x;lastY=y;moved=false;return true;}if(e.getAction()==MotionEvent.ACTION_MOVE){if(Math.abs(x-lastX)+Math.abs(y-lastY)>5)moved=true;offX+=x-lastX;offY+=y-lastY;lastX=x;lastY=y;invalidate();return true;}if(e.getAction()==MotionEvent.ACTION_UP&&!moved){if(search.contains(x,y)){search();return true;}if(reset.contains(x,y)){scale=1;offX=offY=0;invalidate();return true;}float tx=(x-offX)/scale,ty=(y-offY)/scale;for(int i=0;i<cells.size();i++)if(cells.get(i).contains(tx,ty)){open(nums.get(i));break;}}return true;}
 }

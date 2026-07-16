@@ -1,38 +1,13 @@
 package com.richardtalcott.periodic;
-import android.content.Context;
-import android.graphics.*;
-import android.view.View;
-public final class ElementDetailView extends View {
-    private final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);
-    private final ElementData e;
-    private final long start=System.currentTimeMillis();
-    public ElementDetailView(Context c,ElementData element){super(c);e=element;}
-    @Override protected void onDraw(Canvas c){
-        float w=getWidth(),h=getHeight();c.drawColor(Color.rgb(3,6,16));
-        p.setColor(Color.WHITE);p.setTypeface(Typeface.create(Typeface.DEFAULT,Typeface.BOLD));
-        p.setTextAlign(Paint.Align.LEFT);p.setTextSize(24);c.drawText("‹  "+e.name,24,48,p);
-        p.setTextSize(15);p.setColor(Color.rgb(94,198,255));c.drawText(e.category.toUpperCase(),26,75,p);
-        float cx=w/2f,cy=h*.38f,maxR=Math.min(w,h)*.28f,t=(System.currentTimeMillis()-start)/1000f;
-        int[] shells=ElementData.shells(e.number);
-        p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(2);
-        for(int s=0;s<shells.length;s++){
-            if(shells[s]==0)continue;float r=maxR*(s+1)/7f;p.setColor(Color.argb(100,100,195,255));c.drawCircle(cx,cy,r,p);
-            for(int i=0;i<shells[s];i++){
-                double a=(Math.PI*2*i/shells[s])+t*(.5f+.08f*s)*(s%2==0?1:-1);
-                float x=cx+(float)Math.cos(a)*r,y=cy+(float)Math.sin(a)*r;
-                p.setStyle(Paint.Style.FILL);p.setColor(Color.rgb(90,205,255));c.drawCircle(x,y,3.5f,p);p.setStyle(Paint.Style.STROKE);
-            }
-        }
-        p.setStyle(Paint.Style.FILL);p.setColor(Color.rgb(255,64,94));c.drawCircle(cx-8,cy,18,p);
-        p.setColor(Color.rgb(74,144,255));c.drawCircle(cx+10,cy+5,17,p);
-        p.setTextAlign(Paint.Align.CENTER);p.setColor(Color.WHITE);p.setTextSize(46);c.drawText(e.symbol,cx,cy+maxR+68,p);
-        p.setTextSize(18);p.setTypeface(Typeface.DEFAULT);p.setColor(Color.rgb(200,220,235));
-        c.drawText("Atomic number  "+e.number,cx,cy+maxR+100,p);
-        c.drawText("Protons  "+e.number+"     Electrons  "+e.number,cx,cy+maxR+130,p);
-        c.drawText("Electron shells  "+shellText(shells),cx,cy+maxR+160,p);
-        p.setTextSize(13);p.setColor(Color.rgb(105,180,220));
-        c.drawText("Animated atomic model • Educational shell approximation",cx,h-32,p);
-        invalidate();
-    }
-    private String shellText(int[] s){StringBuilder b=new StringBuilder();for(int v:s){if(v==0)break;if(b.length()>0)b.append(" • ");b.append(v);}return b.toString();}
+import android.content.Context;import android.graphics.*;import android.view.*;
+public final class ElementDetailView extends View{
+ private final Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);private final ElementData e;private final long start=System.currentTimeMillis();private float zoom=1f,spin=0,lastX;
+ public ElementDetailView(Context c,ElementData x){super(c);e=x;}
+ protected void onDraw(Canvas c){float w=getWidth(),h=getHeight();c.drawColor(Color.rgb(3,6,16));p.setTypeface(Typeface.create(Typeface.DEFAULT,Typeface.BOLD));p.setColor(Color.WHITE);p.setTextAlign(Paint.Align.LEFT);p.setTextSize(25);c.drawText("‹  "+e.name,24,48,p);p.setTextSize(14);p.setColor(Color.rgb(94,198,255));c.drawText(e.category.toUpperCase()+"  •  PERIOD "+e.period+"  •  GROUP "+e.group,26,75,p);
+ float cx=w/2,cy=h*.34f,max=Math.min(w,h)*.24f*zoom,t=(System.currentTimeMillis()-start)/1000f+spin;int[] sh=ElementData.shells(e.number);p.setStyle(Paint.Style.STROKE);p.setStrokeWidth(2);
+ for(int s=0;s<sh.length;s++){if(sh[s]==0)continue;float r=max*(s+1)/7f;p.setColor(Color.argb(110,100,195,255));c.drawCircle(cx,cy,r,p);for(int i=0;i<sh[s];i++){double a=6.283*i/sh[s]+t*(.45+.07*s)*(s%2==0?1:-1);float x=cx+(float)Math.cos(a)*r,y=cy+(float)Math.sin(a)*r;p.setStyle(Paint.Style.FILL);p.setColor(Color.rgb(90,205,255));c.drawCircle(x,y,4,p);p.setStyle(Paint.Style.STROKE);}}
+ p.setStyle(Paint.Style.FILL);for(int i=0;i<Math.min(22,e.number+e.estimatedNeutrons);i++){double a=i*2.4;float r=4+(i%4)*5;p.setColor(i%2==0?Color.rgb(255,64,94):Color.rgb(74,144,255));c.drawCircle(cx+(float)Math.cos(a)*r,cy+(float)Math.sin(a)*r,8,p);}
+ float y=cy+max+58;p.setTextAlign(Paint.Align.CENTER);p.setColor(Color.WHITE);p.setTextSize(48);c.drawText(e.symbol,cx,y,p);p.setTextSize(20);c.drawText(e.name,cx,y+29,p);p.setTypeface(Typeface.DEFAULT);p.setTextSize(16);p.setColor(Color.rgb(205,222,236));c.drawText("Atomic number "+e.number+"     Approx. mass "+e.atomicMass,cx,y+58,p);c.drawText("Protons "+e.number+"     Electrons "+e.number+"     Estimated neutrons "+e.estimatedNeutrons,cx,y+84,p);c.drawText("Electron shells  "+shellText(sh),cx,y+110,p);p.setTextSize(13);p.setColor(Color.rgb(105,180,220));c.drawText("Drag to rotate • Pinch to zoom • Educational atomic visualization",cx,h-28,p);invalidate();}
+ public boolean onTouchEvent(MotionEvent v){if(v.getPointerCount()==2){float d=(float)Math.hypot(v.getX(0)-v.getX(1),v.getY(0)-v.getY(1));if(v.getActionMasked()==MotionEvent.ACTION_POINTER_DOWN)lastX=d;else if(v.getActionMasked()==MotionEvent.ACTION_MOVE&&lastX>0){zoom=Math.max(.7f,Math.min(1.5f,zoom*d/lastX));lastX=d;}invalidate();return true;}if(v.getAction()==MotionEvent.ACTION_DOWN){lastX=v.getX();return true;}if(v.getAction()==MotionEvent.ACTION_MOVE){spin+=(v.getX()-lastX)/120f;lastX=v.getX();invalidate();return true;}return true;}
+ private String shellText(int[]s){StringBuilder b=new StringBuilder();for(int v:s){if(v==0)break;if(b.length()>0)b.append(" • ");b.append(v);}return b.toString();}
 }
