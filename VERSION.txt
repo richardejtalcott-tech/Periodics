@@ -1,0 +1,1 @@
+Periodic 3.0.0\nPackage: com.richardtalcott.periodic\nJava: 17\ncompileSdk: 35\n
