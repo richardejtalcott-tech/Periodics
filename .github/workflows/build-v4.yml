@@ -1,7 +1,7 @@
-name: Build Periodic v4 True 3D
+name: Build Periodic v4 Rebuild
 on:
   push:
-    branches: [ main ]
+    branches: [ main, v4-rebuild ]
   workflow_dispatch:
 jobs:
   build:
