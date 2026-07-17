@@ -3,6 +3,9 @@ package com.richardtalcott.periodic
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
@@ -24,7 +27,15 @@ import androidx.compose.ui.unit.sp
 import kotlin.math.*
 
 class MainActivity : ComponentActivity() {
-  override fun onCreate(state: Bundle?) { super.onCreate(state); setContent { Studio() } }
+  override fun onCreate(state: Bundle?) {
+    super.onCreate(state)
+    WindowCompat.setDecorFitsSystemWindows(window,false)
+    WindowInsetsControllerCompat(window,window.decorView).apply {
+      hide(WindowInsetsCompat.Type.systemBars())
+      systemBarsBehavior=WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+    }
+    setContent { Studio() }
+  }
 }
 private val Ink=Color(0xFF020711); private val Panel=Color(0xD9071827); private val Cyan=Color(0xFF52D7FF)
 private val Gold=Color(0xFFFFC768); private val Red=Color(0xFFFF557F); private val Blue=Color(0xFF639EFF)
@@ -34,7 +45,7 @@ private val symbols="H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V 
 private fun pos(n:Int)=when{n==1->1 to 1;n==2->1 to 18;n<=10->2 to listOf(1,2,13,14,15,16,17,18)[n-3];n<=18->3 to listOf(1,2,13,14,15,16,17,18)[n-11];n<=36->4 to n-18;n<=54->5 to n-36;n==55->6 to 1;n==56->6 to 2;n in 57..71->8 to n-54;n<=86->6 to n-68;n==87->7 to 1;n==88->7 to 2;n in 89..103->9 to n-86;else->7 to n-100}
 private fun all()=(1..118).map{n->val p=pos(n);Element(n,symbols[n-1],ELEMENT_NAMES[n-1],p.first,p.second,REPRESENTATIVE_MASS_NUMBERS[n-1],when{n in 57..71->5;n in 89..103->6;p.second==18->4;p.second==17->3;p.second in 3..12->2;else->1})}
 
-@Composable private fun Studio(){var page by remember{mutableStateOf(Page.TABLE)};var selected by remember{mutableStateOf(all()[25])};var compare by remember{mutableStateOf(all()[28])};MaterialTheme(colorScheme=darkColorScheme(primary=Cyan,background=Ink,surface=Panel)){Box(Modifier.fillMaxSize().background(Brush.radialGradient(listOf(Color(0xFF0B3652),Ink),radius=1300f))){Stars();AnimatedContent(page,label="page"){p->when(p){Page.TABLE->Table{selected=it;page=Page.INFO};Page.INFO->Info(selected,{page=Page.TABLE}){page=it};Page.ATOM->Lab(p,selected,{page=Page.INFO},body={Atom(selected.n)});Page.ISOTOPE->Isotope(selected){page=Page.INFO};Page.ION->Ion(selected){page=Page.INFO};Page.BOND->Lab(p,selected,{page=Page.INFO},body={Molecule()});Page.STATES->States{page=Page.TABLE};Page.COMPARE->Compare(selected,compare,{compare=it}){page=Page.TABLE}}}}}}
+@Composable private fun Studio(){var page by remember{mutableStateOf(Page.TABLE)};var selected by remember{mutableStateOf(all()[25])};var compare by remember{mutableStateOf(all()[28])};MaterialTheme(colorScheme=darkColorScheme(primary=Cyan,background=Ink,surface=Panel,onBackground=Color.White,onSurface=Color.White)){CompositionLocalProvider(LocalContentColor provides Color.White){Box(Modifier.fillMaxSize().safeDrawingPadding().background(Brush.radialGradient(listOf(Color(0xFF0B3652),Ink),radius=1300f))){Stars();AnimatedContent(page,label="page"){p->when(p){Page.TABLE->Table{selected=it;page=Page.INFO};Page.INFO->Info(selected,{page=Page.TABLE}){page=it};Page.ATOM->Lab(p,selected,{page=Page.INFO},body={Atom(selected.n)});Page.ISOTOPE->Isotope(selected){page=Page.INFO};Page.ION->Ion(selected){page=Page.INFO};Page.BOND->Lab(p,selected,{page=Page.INFO},body={Molecule()});Page.STATES->States{page=Page.TABLE};Page.COMPARE->Compare(selected,compare,{compare=it}){page=Page.TABLE}}}}}}}
 @Composable private fun Stars(){Canvas(Modifier.fillMaxSize()){repeat(90){i->drawCircle(Color.White.copy(.12f+(i%5)*.05f),1f+(i%3),Offset(((i*83)%997)/997f*size.width,((i*137)%991)/991f*size.height))}}}
 @Composable private fun Header(title:String,sub:String,back:(()->Unit)?=null){Row(Modifier.fillMaxWidth().padding(18.dp),verticalAlignment=Alignment.CenterVertically){if(back!=null)OutlinedButton(back){Text("‹ Back")};Column(Modifier.padding(start=16.dp)){Text(title.uppercase(),fontSize=26.sp,fontWeight=FontWeight.Black);Text(sub,fontSize=12.sp,color=Cyan)}}}
 private fun color(k:Int)=listOf(Color.Gray,Color(0xFF27A88B),Color(0xFF2C9EC8),Color(0xFF9B4AA5),Color(0xFF386FC0),Color(0xFF8B55C7),Color(0xFFC34B87))[k]
