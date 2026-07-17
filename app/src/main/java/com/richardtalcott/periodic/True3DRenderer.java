@@ -12,7 +12,7 @@ public final class True3DRenderer implements android.opengl.GLSurfaceView.Render
     private int program;
     private Mesh cube,sphere,plane;
     private int width,height;
-    private float yaw=0f,pitch=0f,zoom=1f,panX=0f,panY=0f;
+    private float yaw=-15f,pitch=22f,zoom=1f;
     private final float[] projection=new float[16],view=new float[16],vp=new float[16],model=new float[16],mvp=new float[16],normal=new float[16];
     private final float[][] projected=new float[119][3];
     private long start=System.nanoTime();
@@ -45,30 +45,21 @@ public final class True3DRenderer implements android.opengl.GLSurfaceView.Render
     }
 
     private void camera(float eyeY,float eyeZ){
-        if(atomMode){
-            Matrix.setLookAtM(view,0,0,eyeY,eyeZ,0,0,0,0,1,0);
-            Matrix.rotateM(view,0,pitch,1,0,0);
-            Matrix.rotateM(view,0,yaw,0,1,0);
-        }else{
-            Matrix.setLookAtM(view,0,panX,panY,24f/zoom,panX,panY,0,0,1,0);
-        }
+        Matrix.setLookAtM(view,0,0,eyeY,eyeZ,0,0,0,0,1,0);
+        Matrix.rotateM(view,0,pitch,1,0,0);Matrix.rotateM(view,0,yaw,0,1,0);
         Matrix.multiplyMM(vp,0,projection,0,view,0);
     }
     private void drawTable(){
-        camera(0f,24f);
-        // Layered laboratory wall: depth without tilting the readable table.
-        draw(cube,0,0,-2.2f,15.4f,6.2f,.08f,0x06121F,.18f);
-        for(int i=-6;i<=6;i+=2) draw(cube,0,i*.84f,-2.0f,15.0f,.014f,.025f,0x176B94,.35f);
-        for(int i=-14;i<=14;i+=2) draw(cube,i,0,-2.0f,.014f,6.0f,.025f,0x123B55,.25f);
+        camera(9.4f/zoom,25f/zoom);
+        drawFloor();
         for(int n=1;n<=118;n++){
             ElementData e=ElementData.byNumber(n);
             float x=(e.group-9.5f)*1.28f;
-            float y=(5.05f-e.row)*1.10f;
-            float pulse=.04f*(float)Math.sin((System.nanoTime()/1_000_000_000.0)+n*.41);
+            float z=(e.row-5f)*1.12f;
+            float y=.52f + .09f*(float)Math.sin(n*.71);
             int col=color(e.category);
-            draw(cube,x,y,0,.56f,.47f,.18f+pulse,col,.86f);
-            draw(cube,x,y,.205f,.50f,.41f,.025f,brighten(col),.22f);
-            project(n,x,y,.28f);
+            draw(cube,x,y,z,.56f,.52f,.46f,col,.82f);
+            project(n,x,y+.58f,z);
         }
     }
     private void drawFloor(){
@@ -120,14 +111,10 @@ public final class True3DRenderer implements android.opengl.GLSurfaceView.Render
         if(clip[3]!=0){float nx=clip[0]/clip[3],ny=clip[1]/clip[3];projected[n][0]=(nx*.5f+.5f)*width;projected[n][1]=(-ny*.5f+.5f)*height;projected[n][2]=clip[3];}
     }
     public synchronized float[] projected(int n){return projected[n].clone();}
-    public void rotateBy(float dx,float dy){if(atomMode){yaw+=dx;pitch=Math.max(-28,Math.min(28,pitch+dy));}else{panX-=dx*.018f/zoom;panY+=dy*.018f/zoom;}}
-    public void zoomBy(float r){zoom=Math.max(.72f,Math.min(2.25f,zoom*r));}
+    public void rotateBy(float dx,float dy){yaw+=dx;pitch=Math.max(5,Math.min(42,pitch+dy));}
+    public void zoomBy(float r){zoom=Math.max(.65f,Math.min(1.9f,zoom*r));}
     public int pick(float x,float y,int w,int h){int best=-1;float bd=45f*45f;for(int n=1;n<=118;n++){float[] p=projected[n];float dx=x-p[0],dy=y-p[1],d=dx*dx+dy*dy;if(d<bd){bd=d;best=n;}}return best;}
 
-    private int brighten(int rgb){
-        int r=Math.min(255,((rgb>>16)&255)+28),g=Math.min(255,((rgb>>8)&255)+28),b=Math.min(255,(rgb&255)+28);
-        return (r<<16)|(g<<8)|b;
-    }
     private int color(String c){if(c.contains("Noble"))return 0x2758A4;if(c.contains("Halogen"))return 0x873C89;if(c.contains("Alkali"))return 0xB64051;if(c.contains("Transition"))return 0x176B9B;if(c.contains("Lanthanide"))return 0x7047A8;if(c.contains("Actinide"))return 0xA23C75;if(c.equals("Nonmetal"))return 0x16856F;if(c.equals("Metalloid"))return 0x908527;return 0x40566D;}
 
     private static int shader(int type,String src){int s=GLES30.glCreateShader(type);GLES30.glShaderSource(s,src);GLES30.glCompileShader(s);int[] ok={0};GLES30.glGetShaderiv(s,GLES30.GL_COMPILE_STATUS,ok,0);if(ok[0]==0)throw new RuntimeException(GLES30.glGetShaderInfoLog(s));return s;}
