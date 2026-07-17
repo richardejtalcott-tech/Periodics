@@ -76,6 +76,7 @@ private fun color(k:Int)=listOf(Color.Gray,Color(0xFF27A88B),Color(0xFF2C9EC8),C
 private val nobleCore=mapOf("He" to 2,"Ne" to 10,"Ar" to 18,"Kr" to 36,"Xe" to 54,"Rn" to 86)
 private fun shellCounts(z:Int):List<Int>{
  if(z<=0)return emptyList()
+ if(z>118){val base=shellCounts(118).toMutableList();base[base.lastIndex]+=z-118;return base}
  val counts=IntArray(7);val configuration=ELEMENT_PROPERTIES[z-1].configuration
  Regex("\\[([A-Z][a-z]?)\\]").find(configuration)?.groupValues?.get(1)?.let{core->nobleCore[core]?.let{coreZ->shellCounts(coreZ).forEachIndexed{i,v->counts[i]+=v}}}
  Regex("([1-7])[spdf](\\d+)").findAll(configuration.substringAfter(']',configuration)).forEach{m->counts[m.groupValues[1].toInt()-1]+=m.groupValues[2].toInt()}
