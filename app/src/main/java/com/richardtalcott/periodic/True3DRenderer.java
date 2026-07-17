@@ -30,7 +30,7 @@ public final class True3DRenderer implements android.opengl.GLSurfaceView.Render
 
     public True3DRenderer(Context c,boolean atomMode,int atomicNumber){this.context=c;this.atomMode=atomMode;this.atomicNumber=atomicNumber;}
 
-    @Override public void onSurfaceCreated(javax.microedition.khronos.egl.EGLConfig config){
+    @Override public void onSurfaceCreated(javax.microedition.khronos.opengles.GL10 gl, javax.microedition.khronos.egl.EGLConfig config){
         GLES30.glClearColor(.004f,.012f,.027f,1f);
         GLES30.glEnable(GLES30.GL_DEPTH_TEST);GLES30.glEnable(GLES30.GL_CULL_FACE);
         program=program(VS,FS);cube=cube();sphere=sphere(16,24);plane=plane();
