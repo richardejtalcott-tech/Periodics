@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 public final class SplashActivity extends Activity {
