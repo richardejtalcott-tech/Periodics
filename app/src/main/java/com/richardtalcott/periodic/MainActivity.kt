@@ -1,7 +1,6 @@
 package com.richardtalcott.periodic
 
 import android.os.Bundle
-import android.graphics.BitmapFactory
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.compose.BackHandler
@@ -27,8 +26,6 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -53,11 +50,11 @@ private val symbols="H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V 
 private fun pos(n:Int)=when{n==1->1 to 1;n==2->1 to 18;n<=10->2 to listOf(1,2,13,14,15,16,17,18)[n-3];n<=18->3 to listOf(1,2,13,14,15,16,17,18)[n-11];n<=36->4 to n-18;n<=54->5 to n-36;n==55->6 to 1;n==56->6 to 2;n in 57..71->8 to n-54;n<=86->6 to n-68;n==87->7 to 1;n==88->7 to 2;n in 89..103->9 to n-86;else->7 to n-100}
 private fun all()=(1..118).map{n->val p=pos(n);Element(n,symbols[n-1],ELEMENT_NAMES[n-1],p.first,p.second,REPRESENTATIVE_MASS_NUMBERS[n-1],when{n in 57..71->5;n in 89..103->6;p.second==18->4;p.second==17->3;p.second in 3..12->2;else->1})}
 
-@Composable private fun Studio(){var page by remember{mutableStateOf(Page.TABLE)};var selected by remember{mutableStateOf(all()[25])};var compare by remember{mutableStateOf(all()[28])};BackHandler(enabled=page!=Page.TABLE){page=if(page==Page.INFO)Page.TABLE else Page.INFO};MaterialTheme(colorScheme=darkColorScheme(primary=Cyan,background=Ink,surface=Panel,onBackground=Color.White,onSurface=Color.White)){CompositionLocalProvider(LocalContentColor provides Color.White){Box(Modifier.fillMaxSize().safeDrawingPadding().background(Ink)){ReactorBackdrop();Stars();AnimatedContent(page,label="page"){p->when(p){Page.TABLE->Table{selected=it;compare=all().first{x->x.n!=it.n};page=Page.INFO};Page.INFO->Info(selected,{page=Page.TABLE}){page=it};Page.ATOM->AtomExplorer(selected){page=Page.INFO};Page.ISOTOPE->Isotope(selected){page=Page.INFO};Page.ION->Ion(selected){page=Page.INFO};Page.BOND->Bond{page=Page.INFO};Page.STATES->States(selected){page=Page.INFO};Page.COMPARE->Compare(selected,compare,{compare=it}){page=Page.INFO}}}}}}}
+@Composable private fun Studio(){var page by remember{mutableStateOf(Page.TABLE)};var selected by remember{mutableStateOf(all()[25])};var compare by remember{mutableStateOf(all()[28])};BackHandler(enabled=page!=Page.TABLE){page=if(page==Page.INFO)Page.TABLE else Page.INFO};MaterialTheme(colorScheme=darkColorScheme(primary=Cyan,background=Ink,surface=Panel,onBackground=Color.White,onSurface=Color.White)){CompositionLocalProvider(LocalContentColor provides Color.White){Box(Modifier.fillMaxSize().safeDrawingPadding().background(Ink)){LaboratoryScene(page.ordinal);AnimatedContent(page,label="page"){p->when(p){Page.TABLE->Table{selected=it;compare=all().first{x->x.n!=it.n};page=Page.INFO};Page.INFO->Info(selected,{page=Page.TABLE}){page=it};Page.ATOM->AtomExplorer(selected){page=Page.INFO};Page.ISOTOPE->Isotope(selected){page=Page.INFO};Page.ION->Ion(selected){page=Page.INFO};Page.BOND->Bond{page=Page.INFO};Page.STATES->States(selected){page=Page.INFO};Page.COMPARE->Compare(selected,compare,{compare=it}){page=Page.INFO}}}}}}}
 @Composable private fun Stars(){Canvas(Modifier.fillMaxSize()){repeat(90){i->drawCircle(Color.White.copy(.12f+(i%5)*.05f),1f+(i%3),Offset(((i*83)%997)/997f*size.width,((i*137)%991)/991f*size.height))}}}
 @Composable private fun ReactorBackdrop(){Canvas(Modifier.fillMaxSize()){drawRect(Brush.verticalGradient(listOf(Color(0xFF03101A),Color(0xFF071D2D),Ink)));val horizon=size.height*.72f;repeat(12){i->val x=size.width*i/11f;drawLine(Cyan.copy(.09f),Offset(size.width/2,horizon),Offset(x,size.height),1f)};repeat(5){i->drawOval(Cyan.copy(.08f),topLeft=Offset(-size.width*.1f,horizon+i*38f),size=androidx.compose.ui.geometry.Size(size.width*1.2f,70f+i*20f),style=Stroke(2f))};repeat(9){i->val x=size.width*i/8f;drawRect(Brush.horizontalGradient(listOf(Color.Transparent,Cyan.copy(.08f),Color.Transparent)),Offset(x-35f,0f),androidx.compose.ui.geometry.Size(70f,horizon))};drawLine(Cyan.copy(.18f),Offset(0f,horizon),Offset(size.width,horizon),3f)}}
-@Composable private fun TableEnvironment(pan:Offset,zoom:Float){val environment=remember{BitmapFactory.decodeByteArray(ReactorAsset.bytes,0,ReactorAsset.bytes.size).asImageBitmap()};Canvas(Modifier.fillMaxSize()){
- val horizon=size.height*.62f;drawImage(environment,dstSize=IntSize(size.width.toInt(),size.height.toInt()),alpha=.94f);drawRect(Brush.radialGradient(listOf(Color.Transparent,Color(0x22031827),Color(0x88020711)),Offset(size.width*.5f+pan.x*.08f,horizon),size.width*.78f))
+@Composable private fun TableEnvironment(pan:Offset,zoom:Float){Canvas(Modifier.fillMaxSize()){
+ val horizon=size.height*.62f;drawRect(Brush.radialGradient(listOf(Color.Transparent,Color(0x11031827),Color(0x55020711)),Offset(size.width*.5f+pan.x*.08f,horizon),size.width*.78f))
  // Volumetric reactor-light shafts behind the suspended matrix.
  repeat(7){i->val x=size.width*(i+1)/8f+pan.x*.035f;val half=28f+(i%3)*12f;val path=Path().apply{moveTo(x-half,0f);lineTo(x+half,0f);lineTo(x+half*2.8f,horizon);lineTo(x-half*2.8f,horizon);close()};drawPath(path,Brush.verticalGradient(listOf(Cyan.copy(.09f),Color.Transparent)))}
  // Perspective floor: every line converges on the movable camera vanishing point.
