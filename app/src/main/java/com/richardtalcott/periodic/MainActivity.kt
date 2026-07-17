@@ -81,7 +81,59 @@ private fun shellCounts(z:Int):List<Int>{
  Regex("([1-7])[spdf](\\d+)").findAll(configuration.substringAfter(']',configuration)).forEach{m->counts[m.groupValues[1].toInt()-1]+=m.groupValues[2].toInt()}
  return counts.toList().dropLastWhile{it==0}
 }
-@Composable private fun ScientificAtom(protons:Int,neutrons:Int,electrons:Int,cloud:Boolean=false,running:Boolean=true){val t by rememberInfiniteTransition(label="atom3d").animateFloat(0f,360f,infiniteRepeatable(tween(9500,easing=LinearEasing)),label="orbit");Canvas(Modifier.fillMaxSize().padding(8.dp)){val c=center;val base=min(size.width,size.height)*.115f;val angle=if(running)t else 32f;drawCircle(Brush.radialGradient(listOf(Cyan.copy(.22f),Color.Transparent),c,base*4.7f),base*4.7f,c);val total=(protons+neutrons).coerceAtLeast(1);repeat(min(total,90)){i->val a=i*2.399963f;val layer=sqrt((i+.5f)/min(total,90).toFloat());val d=base*.72f*layer;val p=Offset(c.x+cos(a)*d,c.y+sin(a)*d*.78f);val tint=if(i<protons)Red else Blue;drawCircle(Brush.radialGradient(listOf(Color.White,tint,tint.copy(.45f)),Offset(p.x-base*.05f,p.y-base*.06f),base*.22f),base*.18f,p)};if(electrons>0){val counts=if(electrons<=118)shellCounts(electrons) else listOf(electrons);counts.forEachIndexed{s,count->val rx=base*(1.75f+s*.66f);val ry=rx*(.54f+(s%2)*.08f);if(!cloud){rotate(if(s%2==0)-12f+s*7f else 18f-s*4f,c){drawOval(Cyan.copy(.38f),Offset(c.x-rx,c.y-ry),androidx.compose.ui.geometry.Size(rx*2,ry*2),style=Stroke(2.2f))};repeat(count){i->val a=Math.toRadians((angle*(if(s%2==0)1 else -1)*(1+s*.035f)+i*360f/count).toDouble());val tilt=Math.toRadians((if(s%2==0)-12f+s*7f else 18f-s*4f).toDouble());val x=cos(a).toFloat()*rx;val y=sin(a).toFloat()*ry;val p=Offset(c.x+x*cos(tilt).toFloat()-y*sin(tilt).toFloat(),c.y+x*sin(tilt).toFloat()+y*cos(tilt).toFloat());drawCircle(Cyan.copy(.18f),base*.16f,p);drawCircle(Brush.radialGradient(listOf(Color.White,Cyan),p,base*.10f),base*.085f,p)}}else{repeat(140){i->val a=(i*2.399963+s*.7f);val radial=rx*(.65f+((i*47)%35)/100f);val p=Offset(c.x+cos(a)*radial,c.y+sin(a)*radial*.62f);drawCircle(Cyan.copy(.035f+(i%5)*.012f),1.5f+(i%3),p)}}}}}}}
+@Composable
+private fun ScientificAtom(
+ protons:Int,
+ neutrons:Int,
+ electrons:Int,
+ cloud:Boolean=false,
+ running:Boolean=true
+){
+ val t by rememberInfiniteTransition(label="atom3d").animateFloat(
+  0f,360f,infiniteRepeatable(tween(9500,easing=LinearEasing)),label="orbit"
+ )
+ Canvas(Modifier.fillMaxSize().padding(8.dp)){
+  val c=center
+  val base=min(size.width,size.height)*.115f
+  val frame=if(running)t else 32f
+  drawCircle(Brush.radialGradient(listOf(Cyan.copy(.22f),Color.Transparent),c,base*4.7f),base*4.7f,c)
+  val visibleNucleons=min((protons+neutrons).coerceAtLeast(1),90)
+  repeat(visibleNucleons){i->
+   val a=i*2.399963f
+   val layer=sqrt((i+.5f)/visibleNucleons.toFloat())
+   val d=base*.72f*layer
+   val p=Offset(c.x+cos(a)*d,c.y+sin(a)*d*.78f)
+   val tint=if(i<protons)Red else Blue
+   drawCircle(Brush.radialGradient(listOf(Color.White,tint,tint.copy(.45f)),Offset(p.x-base*.05f,p.y-base*.06f),base*.22f),base*.18f,p)
+  }
+  if(electrons>0){
+   shellCounts(electrons).forEachIndexed{s,count->
+    val rx=base*(1.75f+s*.66f)
+    val ry=rx*(.54f+(s%2)*.08f)
+    val tiltDegrees=if(s%2==0)-12f+s*7f else 18f-s*4f
+    if(!cloud){
+     rotate(tiltDegrees,c){drawOval(Cyan.copy(.38f),Offset(c.x-rx,c.y-ry),androidx.compose.ui.geometry.Size(rx*2,ry*2),style=Stroke(2.2f))}
+     repeat(count){i->
+      val orbitalAngle=Math.toRadians((frame*(if(s%2==0)1 else -1)*(1+s*.035f)+i*360f/count).toDouble())
+      val tilt=Math.toRadians(tiltDegrees.toDouble())
+      val x=cos(orbitalAngle).toFloat()*rx
+      val y=sin(orbitalAngle).toFloat()*ry
+      val p=Offset(c.x+x*cos(tilt).toFloat()-y*sin(tilt).toFloat(),c.y+x*sin(tilt).toFloat()+y*cos(tilt).toFloat())
+      drawCircle(Cyan.copy(.18f),base*.16f,p)
+      drawCircle(Brush.radialGradient(listOf(Color.White,Cyan),p,base*.10f),base*.085f,p)
+     }
+    }else{
+     repeat(140){i->
+      val a=i*2.399963f+s*.7f
+      val radial=rx*(.65f+((i*47)%35)/100f)
+      val p=Offset(c.x+cos(a)*radial,c.y+sin(a)*radial*.62f)
+      drawCircle(Cyan.copy(.035f+(i%5)*.012f),1.5f+(i%3),p)
+     }
+    }
+   }
+  }
+ }
+}
 @Composable private fun Atom(n:Int){ScientificAtom(n,(REPRESENTATIVE_MASS_NUMBERS.getOrElse(n-1){n}-n).coerceAtLeast(0),n)}
 @Composable private fun AtomExplorer(e:Element,back:()->Unit){var cloud by remember{mutableStateOf(false)};var running by remember{mutableStateOf(true)};Column(Modifier.fillMaxSize()){Header("${e.name} (${e.symbol})","ATOM EXPLORER • INTERACTIVE STRUCTURE AND ELECTRON ENERGY LEVELS",back);Row(Modifier.fillMaxSize().padding(14.dp),horizontalArrangement=Arrangement.spacedBy(12.dp)){Glass(Modifier.width(185.dp).fillMaxHeight()){Text(e.symbol,fontSize=62.sp,fontWeight=FontWeight.Black);Metric("Atomic number","${e.n}");Metric("Protons","${e.n}",Red);Metric("Neutrons","${e.mass-e.n}",Blue);Metric("Electrons","${e.n}");Metric("Mass number","${e.mass}",Gold);Text("SHELL POPULATION",fontSize=9.sp,color=Cyan);Text(shellCounts(e.n).joinToString(" • "),fontSize=14.sp,fontWeight=FontWeight.Bold)};Glass(Modifier.weight(1f).fillMaxHeight()){Box(Modifier.weight(1f).fillMaxWidth()){ScientificAtom(e.n,e.mass-e.n,e.n,cloud,running);Text(if(cloud)"ELECTRON PROBABILITY CLOUD" else "3D SHELL MODEL",Modifier.align(Alignment.TopCenter),fontSize=11.sp,color=Cyan)};Row(horizontalArrangement=Arrangement.spacedBy(7.dp)){if(!cloud)Button({cloud=false}){Text("Shells")}else OutlinedButton({cloud=false}){Text("Shells")};if(cloud)Button({cloud=true}){Text("Cloud")}else OutlinedButton({cloud=true}){Text("Cloud")};OutlinedButton({running=!running}){Text(if(running)"Pause" else "Resume")}}};Glass(Modifier.width(205.dp).fillMaxHeight()){Text("SCIENTIFIC MODEL",fontSize=12.sp,color=Cyan);Text("Nucleus and particles are enlarged. Shells represent principal energy levels; the cloud view better represents electron probability.",fontSize=10.sp,lineHeight=15.sp);HorizontalDivider(color=Cyan.copy(.2f));Metric("Configuration",ELEMENT_PROPERTIES[e.n-1].configuration);Metric("Neutral charge","0");Metric("Model scale","illustrative",Gold)}}}}
 @Composable private fun Isotope(e:Element,back:()->Unit){var m by remember{mutableFloatStateOf(e.mass.toFloat())};val lower=max(e.n,e.mass-4);val upper=e.mass+4;val mass=m.roundToInt().coerceIn(lower,upper);val neutrons=mass-e.n;Column(Modifier.fillMaxSize()){Header("Isotope Lab","${e.name} • CHANGE NEUTRONS AND INSPECT THE NUCLEUS",back);Row(Modifier.fillMaxSize().padding(14.dp),horizontalArrangement=Arrangement.spacedBy(12.dp)){Glass(Modifier.width(205.dp).fillMaxHeight()){Text("ISOTOPE CONTROLS",fontSize=11.sp,color=Cyan);Text("${e.symbol}-$mass",fontSize=44.sp,color=Gold);Metric("Protons","${e.n}",Red);Metric("Neutrons","$neutrons",Blue);Metric("Mass number","$mass");Text("ADJUST NEUTRONS",fontSize=9.sp,color=Color.White.copy(.65f));Slider(value=mass.toFloat(),onValueChange={m=it.roundToInt().toFloat()},valueRange=lower.toFloat()..upper.toFloat(),steps=(upper-lower-1).coerceAtLeast(0))};Glass(Modifier.weight(1f).fillMaxHeight()){Box(Modifier.weight(1f).fillMaxWidth()){ScientificAtom(e.n,neutrons,e.n);Text("NUCLEUS • ${e.n} PROTON${if(e.n==1)"" else "S"} • $neutrons NEUTRON${if(neutrons==1)"" else "S"}",Modifier.align(Alignment.TopCenter),color=Cyan,fontSize=10.sp)};Text("Atomic number stays ${e.n}; changing neutrons creates a different isotope of ${e.name}.",fontSize=10.sp,color=Color.White.copy(.75f))};Glass(Modifier.width(215.dp).fillMaxHeight()){Text("NUCLIDE DATA",fontSize=11.sp,color=Cyan);Metric("Nuclide","${e.symbol}-$mass");Metric("Atomic number","${e.n}");Metric("Mass number","$mass");Metric("Neutron number","$neutrons");Metric("N/Z ratio",if(e.n>0)"%.2f".format(neutrons.toFloat()/e.n) else "—",Gold);Text("Nuclear stability requires evaluated nuclide data; this visualizer does not assume stability from neutron count alone.",fontSize=9.sp,lineHeight=14.sp,color=Gold)}}}}
