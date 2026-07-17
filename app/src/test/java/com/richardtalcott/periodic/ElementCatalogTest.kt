@@ -12,7 +12,7 @@ class ElementCatalogTest {
     assertEquals("Oganesson", ELEMENT_NAMES.last())
   }
 
-  @Test fun zincRegressionIsCorrect() {
+  @Test fun propertyCatalogCoversEveryElement() {\n    assertEquals(118, ELEMENT_PROPERTIES.size)\n    assertEquals("65.38(2)", ELEMENT_PROPERTIES[29].atomicMass)\n    assertEquals("[Ar] 3d10 4s2", ELEMENT_PROPERTIES[29].configuration)\n  }\n\n  @Test fun zincRegressionIsCorrect() {
     assertEquals("Zinc", ELEMENT_NAMES[29])
     assertEquals(65, REPRESENTATIVE_MASS_NUMBERS[29])
   }
