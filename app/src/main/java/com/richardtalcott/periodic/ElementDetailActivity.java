@@ -1,13 +1,23 @@
 package com.richardtalcott.periodic;
+
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.Window;
-import android.view.WindowManager;
+import android.view.*;
+import android.widget.FrameLayout;
+
 public final class ElementDetailActivity extends Activity {
-    @Override public void onCreate(Bundle state) {
-        super.onCreate(state);
+    private True3DView gl;
+    @Override public void onCreate(Bundle b){
+        super.onCreate(b);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        setContentView(new ElementDetailView(this, ElementData.byNumber(getIntent().getIntExtra("atomicNumber", 8))));
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        int n=getIntent().getIntExtra("atomicNumber",8);
+        FrameLayout root=new FrameLayout(this);
+        gl=new True3DView(this,true,n);
+        root.addView(gl,new FrameLayout.LayoutParams(-1,-1));
+        root.addView(new ElementHudView(this,ElementData.byNumber(n)),new FrameLayout.LayoutParams(-1,-1));
+        setContentView(root);
     }
+    @Override protected void onPause(){super.onPause();gl.onPause();}
+    @Override protected void onResume(){super.onResume();gl.onResume();}
 }
