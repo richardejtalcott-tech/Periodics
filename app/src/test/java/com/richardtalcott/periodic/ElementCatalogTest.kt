@@ -25,7 +25,43 @@ class ElementCatalogTest {
 
   @Test fun representativeMassNeverHasFewerNucleonsThanProtons() {
     REPRESENTATIVE_MASS_NUMBERS.forEachIndexed { index, mass ->
-      assertTrue("Invalid representative mass", mass >= index + 1)
+      assertTrue("Invalid representative mass for atomic number ${index + 1}", mass >= index + 1)
+    }
+  }
+
+  @Test fun everyKnownPhaseTemperatureIsPositiveKelvin() {
+    ELEMENT_PROPERTIES.forEachIndexed { index, element ->
+      listOf("melting" to element.meltingPoint, "boiling" to element.boilingPoint).forEach { (label, raw) ->
+        assertTrue(
+          "Invalid $label temperature for ${ELEMENT_NAMES[index]}: $raw",
+          raw == "Unknown" || (raw.toFloatOrNull() != null && raw.toFloat() > 0f)
+        )
+      }
+    }
+  }
+
+  @Test fun lowerBoilingValueOnlyOccursForDocumentedSublimationCase() {
+    ELEMENT_PROPERTIES.forEachIndexed { index, element ->
+      val melting = element.meltingPoint.toFloatOrNull()
+      val boiling = element.boilingPoint.toFloatOrNull()
+      if (melting != null && boiling != null && boiling < melting) {
+        assertEquals("Unexpected phase-order anomaly for ${ELEMENT_NAMES[index]}", "Arsenic", ELEMENT_NAMES[index])
+      }
+    }
+  }
+
+  @Test fun criticallyVisibleMeltingPointAnchorsRemainCorrect() {
+    assertEquals("14", ELEMENT_PROPERTIES[0].meltingPoint)    // Hydrogen
+    assertEquals("1358", ELEMENT_PROPERTIES[28].meltingPoint) // Copper
+    assertEquals("3695", ELEMENT_PROPERTIES[73].meltingPoint) // Tungsten
+    assertEquals("234", ELEMENT_PROPERTIES[79].meltingPoint)  // Mercury
+  }
+
+  @Test fun allPropertyLabelsAndConfigurationsArePresent() {
+    ELEMENT_PROPERTIES.forEachIndexed { index, element ->
+      assertTrue("Missing category for ${ELEMENT_NAMES[index]}", element.category.isNotBlank())
+      assertTrue("Missing configuration for ${ELEMENT_NAMES[index]}", element.configuration.isNotBlank())
+      assertTrue("Missing mass for ${ELEMENT_NAMES[index]}", element.atomicMass.isNotBlank())
     }
   }
 }
