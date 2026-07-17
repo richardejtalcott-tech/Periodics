@@ -1,7 +1,6 @@
 package com.richardtalcott.periodic
 
 import android.os.Bundle
-import android.view.WindowInsets
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedContent
@@ -25,7 +24,7 @@ import androidx.compose.ui.unit.sp
 import kotlin.math.*
 
 class MainActivity : ComponentActivity() {
-  override fun onCreate(state: Bundle?) { super.onCreate(state); window.insetsController?.hide(WindowInsets.Type.systemBars()); setContent { Studio() } }
+  override fun onCreate(state: Bundle?) { super.onCreate(state); setContent { Studio() } }
 }
 private val Ink=Color(0xFF020711); private val Panel=Color(0xD9071827); private val Cyan=Color(0xFF52D7FF)
 private val Gold=Color(0xFFFFC768); private val Red=Color(0xFFFF557F); private val Blue=Color(0xFF639EFF)
