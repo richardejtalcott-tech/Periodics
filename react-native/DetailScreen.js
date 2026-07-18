@@ -1,0 +1,6 @@
+import React from 'react';
+import {Pressable,ScrollView,Text,View} from 'react-native';
+import AtomView from './AtomView';
+import {bonds,NAMES,SYMBOLS,shells} from './data';
+import s from './styles';
+export default function DetailScreen({number,back}){const i=number-1,sh=shells(number);return <ScrollView contentContainerStyle={s.detail}><View style={s.panel}><Pressable onPress={back}><Text style={s.back}>‹ PERIODIC TABLE</Text></Pressable><Text style={s.big}>{NAMES[i]} <Text style={s.gold}>{SYMBOLS[i]}</Text></Text><Text style={s.fact}>Atomic number: {number}</Text><Text style={s.fact}>Protons: {number}</Text><Text style={s.fact}>Electrons: {number}</Text><Text style={s.fact}>Estimated neutrons: {Math.max(0,Math.round(number*1.28-number))}</Text><Text style={s.fact}>Electron shells: {sh.join(' • ')}</Text><View style={s.bond}><Text style={s.gold}>COMMON BONDS</Text><Text style={s.bondText}>{bonds(SYMBOLS[i])}</Text></View></View><View style={[s.panel,{alignItems:'center'}]}><Text style={s.gold}>INTERACTIVE ATOM</Text><AtomView number={number}/><Text style={s.fact}>Oval orbital paths • rotating nucleus • element-specific electron count</Text><Text style={s.hint}>The nucleus is intentionally compact so the orbital structure remains visible.</Text></View></ScrollView>}
