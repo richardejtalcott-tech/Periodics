@@ -52,7 +52,7 @@ jobs:
           test "$SIZE" -gt 5000000
           unzip -l "$APK" | tee /tmp/apk-files.txt
           grep -q "assets/index.android.bundle" /tmp/apk-files.txt
-          ! unzip -p "$APK" AndroidManifest.xml 2>/dev/null | grep -q "localhost:8081" || true
+          unzip -p "$APK" classes.dex | strings | grep -q "com.periodicv5"
 
       - name: Install and launch standalone APK
         uses: reactivecircus/android-emulator-runner@v2
@@ -64,20 +64,22 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: true
           script: |
+            set -o pipefail
             mkdir -p visual-artifacts
             APK=PeriodicV5/android/app/build/outputs/apk/release/app-release.apk
-            adb install -r "$APK"
-            PACKAGE=$(aapt dump badging "$APK" | sed -n "s/package: name='\([^']*\)'.*/\1/p")
-            echo "Package: $PACKAGE"
+            adb install -r "$APK" | tee visual-artifacts/install.txt
             adb shell settings put system accelerometer_rotation 0
             adb shell settings put system user_rotation 1
-            adb shell monkey -p "$PACKAGE" 1
-            sleep 12
+            adb logcat -c
+            adb shell am force-stop com.periodicv5
+            adb shell am start -W -n com.periodicv5/.MainActivity | tee visual-artifacts/launch.txt
+            sleep 15
             adb exec-out screencap -p > visual-artifacts/01-launch.png
             adb shell dumpsys activity activities > visual-artifacts/activity-state.txt
             adb shell logcat -d > visual-artifacts/logcat.txt
-            ! grep -q "Unable to load script" visual-artifacts/logcat.txt
-            ! grep -q "loadJSBundleFromAssets" visual-artifacts/logcat.txt
+            grep -q "mResumedActivity.*com.periodicv5" visual-artifacts/activity-state.txt || grep -q "topResumedActivity.*com.periodicv5" visual-artifacts/activity-state.txt
+            ! grep -Fq "Unable to load script." visual-artifacts/logcat.txt
+            ! grep -Eq "FATAL EXCEPTION: main|Process: com.periodicv5.*has died" visual-artifacts/logcat.txt
 
       - uses: actions/upload-artifact@v4
         if: always()
