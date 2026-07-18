@@ -1,0 +1,60 @@
+name: Visual Test Periodic v5 PR
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  visual-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.11.0'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK
+        run: yes | sdkmanager "platforms;android-35" "build-tools;35.0.0" "system-images;android-35;google_apis;x86_64" "emulator"
+
+      - name: Generate pinned React Native project
+        run: |
+          npx @react-native-community/cli@20.0.0 init PeriodicV5 --version 0.86.0 --skip-git-init
+          cp react-native/*.js PeriodicV5/
+          cp react-native/app.json PeriodicV5/app.json
+          sed -i 's/<string name="app_name">.*<\/string>/<string name="app_name">Periodic<\/string>/' PeriodicV5/android/app/src/main/res/values/strings.xml
+          sed -i 's/android:name=".MainActivity"/android:name=".MainActivity" android:screenOrientation="landscape"/' PeriodicV5/android/app/src/main/AndroidManifest.xml
+
+      - name: Validate JavaScript source
+        run: |
+          node --check react-native/index.js
+          node --check react-native/data.js
+
+      - name: Build APK
+        working-directory: PeriodicV5/android
+        run: |
+          chmod +x gradlew
+          ./gradlew --stop || true
+          ./gradlew --no-daemon clean assembleDebug testDebugUnitTest --stacktrace
+          test -f app/build/outputs/apk/debug/app-debug.apk
+          SIZE=$(stat -c%s app/build/outputs/apk/debug/app-debug.apk)
+          echo "APK size: $SIZE bytes"
+          test "$SIZE" -gt 5000000
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Periodic-v5-build-output
+          path: |
+            PeriodicV5/android/app/build/outputs/apk/debug/app-debug.apk
+            PeriodicV5/android/app/build/reports/
+          if-no-files-found: warn
