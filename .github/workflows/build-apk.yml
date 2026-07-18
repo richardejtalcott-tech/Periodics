@@ -2,8 +2,10 @@ name: Build Periodic v4 Functional Rebuild
 on:
   push:
     branches: [ periodic-v4-functional-rebuild ]
-  pull_request:
   workflow_dispatch:
+concurrency:
+  group: periodic-v4-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   build:
     runs-on: ubuntu-latest

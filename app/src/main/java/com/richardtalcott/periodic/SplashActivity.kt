@@ -21,11 +21,23 @@ import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import kotlin.math.*
 
 class SplashActivity : ComponentActivity() {
  private val handler=Handler(Looper.getMainLooper())
- override fun onCreate(state:Bundle?){super.onCreate(state);setContent{ClassicAtomSplash()};handler.postDelayed({startActivity(Intent(this,MainActivity::class.java));finish()},3200)}
+ override fun onCreate(state:Bundle?){
+  super.onCreate(state)
+  WindowCompat.setDecorFitsSystemWindows(window,false)
+  WindowInsetsControllerCompat(window,window.decorView).apply{
+   hide(WindowInsetsCompat.Type.systemBars())
+   systemBarsBehavior=WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+  }
+  setContent{ClassicAtomSplash()}
+  handler.postDelayed({startActivity(Intent(this,MainActivity::class.java));finish()},3200)
+ }
  override fun onDestroy(){handler.removeCallbacksAndMessages(null);super.onDestroy()}
 }
 @Composable private fun ClassicAtomSplash(){

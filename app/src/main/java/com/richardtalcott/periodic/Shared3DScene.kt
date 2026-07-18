@@ -41,6 +41,15 @@ fun LaboratoryScene(mode: Int) {
     val warm = remember(materials) {
         materials.createColorInstance(Color(1.0f, 0.40f, 0.035f, 1f), metallic = 0.55f, roughness = 0.2f)
     }
+    val greenMetal = remember(materials) {
+        materials.createColorInstance(Color(0.02f, 0.58f, 0.39f, 1f), metallic = 0.62f, roughness = 0.18f)
+    }
+    val violetMetal = remember(materials) {
+        materials.createColorInstance(Color(0.48f, 0.12f, 0.72f, 1f), metallic = 0.68f, roughness = 0.19f)
+    }
+    val magentaMetal = remember(materials) {
+        materials.createColorInstance(Color(0.75f, 0.05f, 0.35f, 1f), metallic = 0.72f, roughness = 0.2f)
+    }
 
     SceneView(
         modifier = Modifier.fillMaxSize(),
@@ -48,7 +57,7 @@ fun LaboratoryScene(mode: Int) {
         materialLoader = materials,
         isOpaque = true,
         mainLightNode = rememberMainLightNode(engine) { intensity = 135_000f },
-        cameraNode = rememberCameraNode(engine) { position = Position(0f, 1.15f, 8.5f) },
+        cameraNode = rememberCameraNode(engine) { position = Position(0f, 1.15f, 9.4f) },
         cameraManipulator = rememberCameraManipulator(),
         autoCenterContent = false,
         autoFitContent = false
@@ -71,12 +80,32 @@ fun LaboratoryScene(mode: Int) {
 
         // Page-specific physical exhibit. This changes behind the UI while preserving a common style.
         when (mode) {
-            0 -> { // periodic table: a bank of floating physical sample blocks
-                repeat(18) { i ->
-                    val row = i / 6; val col = i % 6
-                    CubeNode(size = Size(0.64f, 0.22f, 0.62f),
-                        position = Position((col - 2.5f) * 0.78f, 0.65f - row * 0.62f, -3.25f + row * 0.08f),
-                        rotation = Rotation(-8f, (col - 2.5f) * 2.5f, 0f), materialInstance = if ((i + row) % 3 == 0) cyanGlass else blueMetal)
+            0 -> { // periodic table: a full physical matrix under the interactive labeled layer
+                repeat(72) { i ->
+                    val row = i / 18
+                    val col = i % 18
+                    val material = when {
+                        col < 2 -> greenMetal
+                        col == 16 -> violetMetal
+                        col == 17 -> blueMetal
+                        else -> if ((row + col) % 3 == 0) cyanGlass else blueMetal
+                    }
+                    CubeNode(
+                        size = Size(0.43f, 0.18f, 0.48f),
+                        position = Position((col - 8.5f) * 0.53f, 0.82f - row * 0.54f, -3.55f + row * 0.08f),
+                        rotation = Rotation(-7f, (col - 8.5f) * 0.9f, 0f),
+                        materialInstance = material,
+                    )
+                }
+                repeat(30) { i ->
+                    val row = i / 15
+                    val col = i % 15
+                    CubeNode(
+                        size = Size(0.43f, 0.18f, 0.48f),
+                        position = Position((col - 7f) * 0.53f, -1.42f - row * 0.48f, -3.25f),
+                        rotation = Rotation(-7f, 0f, 0f),
+                        materialInstance = if (row == 0) violetMetal else magentaMetal,
+                    )
                 }
             }
             5 -> { // bond builder: physical bent molecule
@@ -86,7 +115,32 @@ fun LaboratoryScene(mode: Int) {
                 CylinderNode(radius = 0.11f, height = 1.32f, position = Position(-0.58f, -0.16f, -2.55f), rotation = Rotation(0f, 0f, -55f), materialInstance = warm)
                 CylinderNode(radius = 0.11f, height = 1.32f, position = Position(0.58f, -0.16f, -2.55f), rotation = Rotation(0f, 0f, 55f), materialInstance = warm)
             }
-            else -> { // atom, isotope, ion, states, compare and element profile
+            6 -> { // states of matter: a true depth-filled particle chamber
+                repeat(42) { i ->
+                    val x = ((i * 37) % 101) / 100f * 7.2f - 3.6f
+                    val y = ((i * 61) % 97) / 96f * 3.7f - 1.25f
+                    val z = -2.7f - (i % 7) * 0.2f
+                    SphereNode(
+                        radius = 0.08f + (i % 3) * 0.018f,
+                        position = Position(x, y, z),
+                        materialInstance = if (i % 4 == 0) warm else cyanGlass,
+                    )
+                }
+            }
+            7 -> { // compare: two specimen fields on the shared exhibit deck
+                repeat(24) { i ->
+                    val side = if (i < 12) -1f else 1f
+                    val local = i % 12
+                    val angle = local * 2.39996f
+                    val radius = 0.16f * kotlin.math.sqrt(local + 1f)
+                    SphereNode(
+                        radius = 0.13f + (local % 3) * 0.025f,
+                        position = Position(side * 2.0f + kotlin.math.cos(angle) * radius, 0.15f + kotlin.math.sin(angle) * radius, -3.0f + (local % 4) * 0.06f),
+                        materialInstance = if (side < 0f) cyanGlass else warm,
+                    )
+                }
+            }
+            else -> { // element profile, atom, isotope and ion share one atomic exhibit language
                 repeat(22) { i ->
                     val a = i * 2.39996f; val r = 0.18f * kotlin.math.sqrt(i + 1f)
                     SphereNode(radius = 0.19f, position = Position(kotlin.math.cos(a) * r, kotlin.math.sin(a) * r + 0.15f, -2.8f + ((i % 5) - 2) * 0.09f), materialInstance = if (i % 2 == 0) proton else neutron)

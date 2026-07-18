@@ -1,38 +1,46 @@
-# Periodic 3.0
+# Periodic 4 — Approved Vision Rebuild
 
-A fresh Android Studio project for the **Periodic** interactive science app.
+Periodic is a landscape Android science laboratory for exploring all 118 elements. This branch is the isolated v4 replacement build; `main` and the earlier working app remain untouched.
 
-## Included in this foundation
+## Approved interfaces
 
-- Animated oxygen-atom launch screen
-- Dark red/blue/black science-lab visual style
-- Complete 118-element interactive periodic table
-- Landscape table with drag and pinch-to-zoom
-- Tap any element to open an animated atomic shell view
-- Java 17 enforcement
-- Pinned Android Gradle Plugin 8.8.2 and Gradle 8.10.2
-- GitHub Actions workflow that builds and uploads a debug APK
-- Codespaces devcontainer configuration
+- Cinematic atom launch screen
+- Straight-on, movable and tiltable periodic table inside a true Filament/SceneView 3D laboratory
+- Complete element profile using the element that was actually selected
+- Interactive atom explorer with oval energy-level paths and a rotatable nucleus
+- Isotope lab that changes neutrons without changing elemental identity
+- Crash-safe ion builder with explicit proton/electron/net-charge accounting
+- Element-specific bond and compound library with draggable molecule models
+- Fahrenheit states-of-matter lab using the selected element's own phase data
+- Dynamic side-by-side element comparison
 
-This is a stable working foundation for the larger roadmap. The advanced true-3D models, isotope lab, ion builder, bond builder, quark explorer, full scientific datasets, search and favorites are future feature modules rather than claims of being finished in this first clean build.
+The Android Back action pops the in-app navigation stack on every secondary interface. Journey Into Matter is intentionally excluded from this version.
 
-## Build in GitHub
+## Scientific data and modeling boundaries
 
-Upload the contents of this folder to the repository root and push to `main`. Open **Actions → Build Android APK**. After the workflow finishes, download the `Periodic-v3-debug-apk` artifact.
+The 118-element property catalog is generated from the official NIH PubChem Periodic Table PUG REST dataset:
 
-## Build in Android Studio
+`https://pubchem.ncbi.nlm.nih.gov/rest/pug/periodictable/JSON`
 
-Open this folder as a project. Use JDK 17 and install Android SDK Platform 35. Android Studio may use its bundled Gradle integration, or run:
+Run the checked-in generator with:
 
 ```bash
-chmod +x gradlew
-./gradlew clean assembleDebug
+node tools/generate_pubchem_catalog.js pubchem-periodic-table.json \
+  app/src/main/java/com/richardtalcott/periodic/ScientificCatalog.kt
+```
+
+Missing or unestablished source values remain identified as such. Atom and molecule graphics are educational models: nuclei are enlarged for visibility, oval paths represent principal energy levels rather than literal planetary electron trajectories, and the app labels models as illustrative/not to scale. Isotope abundance or stability is only asserted for the evaluated nuclides included in the app. One-atmosphere exceptions such as helium, carbon, and arsenic are handled explicitly in the phase lab.
+
+## Build and validation
+
+The v4 branch workflow runs a clean debug build, unit tests, and Android lint, then uploads the APK artifact:
+
+```bash
+./gradlew --no-daemon clean assembleDebug testDebugUnitTest lintDebug
 ```
 
 APK output:
 
 `app/build/outputs/apk/debug/app-debug.apk`
 
-## Technical choices
-
-The app intentionally uses Android framework classes and custom Canvas rendering with no runtime libraries. This minimizes dependency failures and provides a clean base for later 3D integration.
+The project targets Android SDK 35, JDK 17, Jetpack Compose, and SceneView/Filament.
