@@ -22,7 +22,6 @@ export default function DetailScreen({number,back}){
    <View style={s.journey}>
     {[['ATOM','≈10⁻¹⁰ m'],['NUCLEUS','≈10⁻¹⁵ m'],['NUCLEON','≈10⁻¹⁵ m'],['QUARKS','<10⁻¹⁸ m']].map(([title,scale])=><View key={title} style={s.journeyNode}><Text style={s.journeyTitle}>{title}</Text><Text style={s.journeyScale}>{scale}</Text></View>)}
    </View>
-   <View style={s.aiButton}><Text style={s.aiButtonTitle}>ASK PERIODIC AI</Text><Text style={s.aiButtonText}>Reserved for the contextual chemistry tutor and voice agent.</Text></View>
   </View>
   <View style={[s.panel,{alignItems:'center'}]}>
    <Text style={s.gold}>INTERACTIVE ATOM</Text>
