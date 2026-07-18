@@ -1,11 +1,17 @@
-import React from 'react';
+import React,{useState} from 'react';
 import {Pressable,ScrollView,Text,View} from 'react-native';
 import AtomView from './AtomView';
+import LabScreen from './LabScreen';
 import {FAMILY_COLORS,MASS_NUMBERS,NAMES,SYMBOLS,bonds,family,familyLabel,shells} from './data';
 import s from './styles';
 
+const MODES=['ATOM','ISOTOPES','IONS','BONDS','MATTER'];
+
 export default function DetailScreen({number,back}){
+ const [mode,setMode]=useState('ATOM');
  const i=number-1,sh=shells(number),kind=family(number),accent=FAMILY_COLORS[kind],mass=MASS_NUMBERS[i],neutrons=Math.max(0,mass-number);
+ const dock=<View style={s.modeDock}>{MODES.map(x=><Pressable key={x} onPress={()=>setMode(x)} style={[s.modeButton,mode===x&&s.modeActive]}><Text style={[s.modeText,mode===x&&s.modeTextActive]}>{x}</Text></Pressable>)}</View>;
+ if(mode!=='ATOM')return <View style={{flex:1,backgroundColor:'#020611'}}><View style={s.explorerHeader}><Pressable onPress={back} style={s.backCircle}><Text style={s.backArrow}>‹</Text></Pressable><View style={{alignItems:'center'}}><Text style={s.explorerTitle}>{NAMES[i].toUpperCase()} ({SYMBOLS[i]})</Text><Text style={s.explorerSub}>INTERACTIVE ELEMENT LABORATORY</Text></View><View style={{width:58}}/></View><LabScreen mode={mode} number={number}/>{dock}</View>;
  return <ScrollView contentContainerStyle={s.explorer}>
   <View style={s.explorerHeader}><Pressable onPress={back} style={s.backCircle}><Text style={s.backArrow}>‹</Text></Pressable><View style={{alignItems:'center'}}><Text style={s.explorerTitle}>{NAMES[i].toUpperCase()} ({SYMBOLS[i]})</Text><Text style={s.explorerSub}>ATOM EXPLORER • INTERACTIVE STRUCTURE AND ENERGY LEVELS</Text></View><View style={{width:58}}/></View>
   <View style={s.explorerBody}>
@@ -25,6 +31,6 @@ export default function DetailScreen({number,back}){
     <Text style={s.modelNote}>Illustrative model • not to scale</Text>
    </View>
   </View>
-  <View style={s.modeDock}>{['SHELLS','CLOUD','NUCLEUS','PAUSE'].map((x,j)=><View key={x} style={[s.modeButton,j===0&&s.modeActive]}><Text style={[s.modeText,j===0&&s.modeTextActive]}>{x}</Text></View>)}</View>
+  {dock}
  </ScrollView>;
 }
