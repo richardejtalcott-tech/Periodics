@@ -1,4 +1,4 @@
-name: Build Periodic React Native APK
+name: Build Periodic v5 React Native APK
 on:
   push:
     branches: [ main ]
@@ -17,23 +17,41 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v3
+      - name: Verify toolchain
+        run: |
+          node --version
+          npm --version
+          java -version
       - name: Install Android SDK
         run: yes | sdkmanager "platforms;android-35" "platforms;android-36" "build-tools;36.0.0"
-      - name: Generate pinned React Native Android project
+      - name: Generate React Native 0.86 Android project
         run: |
           npx @react-native-community/cli@latest init PeriodicReact --version 0.86.0 --skip-git-init
           cp react-native/*.js PeriodicReact/
           cp react-native/app.json PeriodicReact/app.json
           sed -i 's/<string name="app_name">.*<\/string>/<string name="app_name">Periodic<\/string>/' PeriodicReact/android/app/src/main/res/values/strings.xml
           sed -i 's/android:name=".MainActivity"/android:name=".MainActivity" android:screenOrientation="landscape"/' PeriodicReact/android/app/src/main/AndroidManifest.xml
-      - name: Compile React Native APK
+      - name: Verify v5 source was installed
+        run: |
+          test -f PeriodicReact/App.js
+          test -f PeriodicReact/TableScreen.js
+          test -f PeriodicReact/DetailScreen.js
+          test -f PeriodicReact/AtomView.js
+          grep -q "PERIODIC" PeriodicReact/TableScreen.js
+          if grep -R "ASK PERIODIC AI" PeriodicReact/*.js; then
+            echo "AI placeholder must not be present in v5" >&2
+            exit 1
+          fi
+      - name: Compile and test React Native APK
         working-directory: PeriodicReact/android
         run: |
           chmod +x gradlew
           ./gradlew --stop || true
           ./gradlew --no-daemon clean assembleDebug testDebugUnitTest
+          test -f app/build/outputs/apk/debug/app-debug.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Periodic-React-Native-debug-apk
+          name: Periodic-v5-react-native-debug-apk
           path: PeriodicReact/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+          retention-days: 30
