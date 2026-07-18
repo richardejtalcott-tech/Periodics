@@ -12,7 +12,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22.11.0'
-          cache: npm
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -23,10 +22,8 @@ jobs:
       - name: Generate pinned React Native Android project
         run: |
           npx @react-native-community/cli@latest init PeriodicReact --version 0.86.0 --skip-git-init
-          cp react-native/App.js PeriodicReact/App.js
-          cp react-native/index.js PeriodicReact/index.js
-          cp react-native/app.json PeriodicReact/app.json
           cp react-native/*.js PeriodicReact/
+          cp react-native/app.json PeriodicReact/app.json
           sed -i 's/<string name="app_name">.*<\/string>/<string name="app_name">Periodic<\/string>/' PeriodicReact/android/app/src/main/res/values/strings.xml
           sed -i 's/android:name=".MainActivity"/android:name=".MainActivity" android:screenOrientation="landscape"/' PeriodicReact/android/app/src/main/AndroidManifest.xml
       - name: Compile React Native APK
