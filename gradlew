@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-VERSION=8.10.2
+VERSION=8.13
 BASE="${HOME}/.gradle/bootstrap"
 DIST="${BASE}/gradle-${VERSION}"
 if [ ! -x "${DIST}/bin/gradle" ]; then
