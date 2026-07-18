@@ -8,7 +8,7 @@ on:
 jobs:
   visual-test:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
 
@@ -39,22 +39,52 @@ jobs:
           node --check react-native/index.js
           node --check react-native/data.js
 
-      - name: Build APK
+      - name: Build standalone release APK
         working-directory: PeriodicV5/android
         run: |
           chmod +x gradlew
           ./gradlew --stop || true
-          ./gradlew --no-daemon clean assembleDebug testDebugUnitTest --stacktrace
-          test -f app/build/outputs/apk/debug/app-debug.apk
-          SIZE=$(stat -c%s app/build/outputs/apk/debug/app-debug.apk)
-          echo "APK size: $SIZE bytes"
+          ./gradlew --no-daemon clean assembleRelease testDebugUnitTest --stacktrace
+          APK=app/build/outputs/apk/release/app-release.apk
+          test -f "$APK"
+          SIZE=$(stat -c%s "$APK")
+          echo "Release APK size: $SIZE bytes"
           test "$SIZE" -gt 5000000
+          unzip -l "$APK" | tee /tmp/apk-files.txt
+          grep -q "assets/index.android.bundle" /tmp/apk-files.txt
+          ! unzip -p "$APK" AndroidManifest.xml 2>/dev/null | grep -q "localhost:8081" || true
+
+      - name: Install and launch standalone APK
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          disable-animations: true
+          script: |
+            mkdir -p visual-artifacts
+            APK=PeriodicV5/android/app/build/outputs/apk/release/app-release.apk
+            adb install -r "$APK"
+            PACKAGE=$(aapt dump badging "$APK" | sed -n "s/package: name='\([^']*\)'.*/\1/p")
+            echo "Package: $PACKAGE"
+            adb shell settings put system accelerometer_rotation 0
+            adb shell settings put system user_rotation 1
+            adb shell monkey -p "$PACKAGE" 1
+            sleep 12
+            adb exec-out screencap -p > visual-artifacts/01-launch.png
+            adb shell dumpsys activity activities > visual-artifacts/activity-state.txt
+            adb shell logcat -d > visual-artifacts/logcat.txt
+            ! grep -q "Unable to load script" visual-artifacts/logcat.txt
+            ! grep -q "loadJSBundleFromAssets" visual-artifacts/logcat.txt
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Periodic-v5-build-output
+          name: Periodic-v5-standalone-release
           path: |
-            PeriodicV5/android/app/build/outputs/apk/debug/app-debug.apk
+            PeriodicV5/android/app/build/outputs/apk/release/app-release.apk
+            visual-artifacts/
             PeriodicV5/android/app/build/reports/
           if-no-files-found: warn
