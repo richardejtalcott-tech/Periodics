@@ -1,0 +1,86 @@
+name: Visual Test Periodic v5
+
+on:
+  push:
+    branches: [ agent/v5-approved-rebuild ]
+  workflow_dispatch:
+
+jobs:
+  visual-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.11.0'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK
+        run: yes | sdkmanager "platforms;android-35" "platforms;android-36" "build-tools;36.0.0" "system-images;android-35;google_apis;x86_64" "emulator"
+
+      - name: Generate pinned React Native project
+        run: |
+          npx @react-native-community/cli@20.0.0 init PeriodicV5 --version 0.86.0 --skip-git-init
+          cp react-native/*.js PeriodicV5/
+          cp react-native/app.json PeriodicV5/app.json
+          sed -i 's/<string name="app_name">.*<\/string>/<string name="app_name">Periodic<\/string>/' PeriodicV5/android/app/src/main/res/values/strings.xml
+          sed -i 's/android:name=".MainActivity"/android:name=".MainActivity" android:screenOrientation="landscape"/' PeriodicV5/android/app/src/main/AndroidManifest.xml
+
+      - name: Build and validate APK
+        working-directory: PeriodicV5/android
+        run: |
+          chmod +x gradlew
+          ./gradlew --stop || true
+          ./gradlew --no-daemon clean assembleDebug testDebugUnitTest
+          test -f app/build/outputs/apk/debug/app-debug.apk
+          SIZE=$(stat -c%s app/build/outputs/apk/debug/app-debug.apk)
+          echo "APK size: $SIZE bytes"
+          test "$SIZE" -gt 5000000
+
+      - name: Capture emulator screenshots
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          disable-animations: true
+          script: |
+            mkdir -p visual-artifacts
+            adb install -r PeriodicV5/android/app/build/outputs/apk/debug/app-debug.apk
+            adb shell settings put system accelerometer_rotation 0
+            adb shell settings put system user_rotation 1
+            adb shell monkey -p com.periodicv5 1 || adb shell monkey -p com.periodicv5 1
+            sleep 8
+            adb exec-out screencap -p > visual-artifacts/01-table.png
+            adb shell input tap 80 170
+            sleep 4
+            adb exec-out screencap -p > visual-artifacts/02-element.png
+            adb shell input keyevent 4
+            sleep 2
+            adb exec-out screencap -p > visual-artifacts/03-table-return.png
+            adb shell dumpsys window windows > visual-artifacts/window-state.txt
+            file visual-artifacts/*.png
+
+      - name: Reject known old-layout markers
+        run: |
+          ! grep -R "magnifying" -n react-native
+          ! grep -R "rotateX:'8deg'" -n react-native
+          ! grep -R "TRUE 3D ELEMENT MATRIX" -n react-native
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Periodic-v5-visual-test
+          path: |
+            visual-artifacts/
+            PeriodicV5/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
