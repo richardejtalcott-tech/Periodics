@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.weight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
@@ -427,7 +426,7 @@ internal fun StatesOfMatterScreen(element: ElementProperties, onBack: () -> Unit
                     {
                         if (available) {
                             when (candidate) {
-                                MatterPhase.SOLID -> temperatureF = ((meltingF ?: 100.0) - 100.0).coerceAtLeast(-459.0).toFloat()
+                                MatterPhase.SOLID -> temperatureF = ((listOfNotNull(meltingF, boilingF).minOrNull() ?: 100.0) - 100.0).coerceAtLeast(-459.0).toFloat()
                                 MatterPhase.LIQUID -> temperatureF = if (meltingF != null && boilingF != null && boilingF > meltingF) ((meltingF + boilingF) / 2.0).toFloat() else 70f
                                 MatterPhase.GAS -> temperatureF = ((boilingF ?: 200.0) + 100.0).coerceAtMost(9_000.0).toFloat()
                                 MatterPhase.PLASMA -> temperatureF = 10_000f

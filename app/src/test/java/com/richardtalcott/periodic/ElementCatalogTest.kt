@@ -101,6 +101,8 @@ class ElementCatalogTest {
         assertEquals(MatterPhase.LIQUID, phaseAtFahrenheit(helium, -458.0))
         assertFalse(matterPhaseAvailableAtOneAtmosphere(carbon, MatterPhase.LIQUID))
         assertFalse(matterPhaseAvailableAtOneAtmosphere(arsenic, MatterPhase.LIQUID))
+        assertEquals(MatterPhase.SOLID, phaseAtFahrenheit(arsenic, 1_000.0))
+        assertEquals(MatterPhase.GAS, phaseAtFahrenheit(arsenic, 1_300.0))
     }
 
     @Test
