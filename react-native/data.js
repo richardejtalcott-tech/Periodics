@@ -1,0 +1,10 @@
+import {SYMBOLS1,NAMES1} from './elements1';
+import {SYMBOLS2,NAMES2} from './elements2';
+import {SYMBOLS3,NAMES3} from './elements3';
+import {SYMBOLS4A,NAMES4A} from './elements4a';
+import {SYMBOLS4B,NAMES4B} from './elements4b';
+export const SYMBOLS=[...SYMBOLS1,...SYMBOLS2,...SYMBOLS3,...SYMBOLS4A,...SYMBOLS4B];
+export const NAMES=[...NAMES1,...NAMES2,...NAMES3,...NAMES4A,...NAMES4B];
+export const COLORS=['#39b8ff','#f45776','#8b69ff','#ffc857','#33d6a6','#ff8c42'];
+export const shells=n=>{let r=[],left=n;for(const cap of [2,8,18,32,32,18,8]){if(left<=0)break;const v=Math.min(left,cap);r.push(v);left-=v;}return r;};
+export const bonds=s=>({H:'H₂, H₂O, CH₄',C:'CO₂, CH₄, C–C',N:'N₂, NH₃, NO₃⁻',O:'O₂, H₂O, CO₂',Na:'NaCl, NaOH',Cl:'NaCl, HCl',Fe:'Fe₂O₃, Fe–C',Si:'SiO₂, Si–O',Ca:'CaCO₃, CaCl₂',S:'SO₂, H₂S',P:'PO₄³⁻, P–O'}[s]||'Element-specific ionic, metallic, or covalent bonding');
